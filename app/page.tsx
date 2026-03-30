@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import LaunchCountdown from "@/components/launch-countdown";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -112,6 +113,7 @@ export default function Home() {
                   Explore Features
                 </a>
               </div>
+              <LaunchCountdown />
             </div>
 
             <div className="relative mx-auto w-full max-w-md">
