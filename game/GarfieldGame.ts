@@ -15,6 +15,17 @@ export default class GarfieldGame extends Phaser.Scene {
   private onPlayAgain?: () => void;
   private playAgainButton?: Phaser.GameObjects.Container;
 
+  // Variable jump tracking
+  private jumpPressStart: number = 0;
+  private isPressingJump: boolean = false;
+  private readonly MIN_JUMP_VELOCITY = -500;
+  private readonly MAX_JUMP_VELOCITY = -900;
+  private readonly MIN_HOLD_MS = 0;
+  private readonly MAX_HOLD_MS = 1000;
+
+  // Audio
+  private audioCtx: AudioContext | null = null;
+
   constructor() {
     super({ key: "GarfieldGame" });
   }
@@ -32,11 +43,86 @@ export default class GarfieldGame extends Phaser.Scene {
     this.load.image("coin", "garfield-coin.jpeg");
   }
 
+  private getAudioContext(): AudioContext {
+    if (!this.audioCtx) {
+      this.audioCtx = new AudioContext();
+    }
+    return this.audioCtx;
+  }
+
+  private playCoinSound() {
+    try {
+      const ctx = this.getAudioContext();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(784, ctx.currentTime);       // G5
+      oscillator.frequency.linearRampToValueAtTime(1047, ctx.currentTime + 0.1); // C6
+
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.15);
+    } catch (e) {
+      // Audio not available, silently ignore
+    }
+  }
+
+  private playHitSound() {
+    try {
+      const ctx = this.getAudioContext();
+
+      // Low thud
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.type = "sawtooth";
+      oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.4);
+
+      gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.4);
+
+      // Short noise burst on top for impact
+      const bufferSize = ctx.sampleRate * 0.1;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.4, ctx.currentTime);
+      noiseGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
+
+      noise.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+      noise.start(ctx.currentTime);
+    } catch (e) {
+      // Audio not available, silently ignore
+    }
+  }
+
   create() {
     this.gameStartTime = Date.now();
     this.score = 0;
     this.isGameOver = false;
     this.gameSpeed = 400;
+    this.isPressingJump = false;
+    this.jumpPressStart = 0;
 
     this.cameras.main.setBackgroundColor("#87CEEB");
 
@@ -45,7 +131,7 @@ export default class GarfieldGame extends Phaser.Scene {
       this.scale.height - 20,
       this.scale.width,
       40,
-      0x228B22
+      0x228b22
     );
     this.physics.add.existing(ground, true);
 
@@ -73,9 +159,19 @@ export default class GarfieldGame extends Phaser.Scene {
 
     this.input.keyboard?.on("keydown-SPACE", (event: KeyboardEvent) => {
       event.preventDefault();
+      if (this.isGameOver || this.isPressingJump) return;
       const body = this.player.body as Phaser.Physics.Arcade.Body;
-      if (!this.isGameOver && body.touching.down) {
-        this.player.setVelocityY(-750);
+      if (body.touching.down) {
+        this.isPressingJump = true;
+        this.jumpPressStart = Date.now();
+      }
+    });
+
+    this.input.keyboard?.on("keyup-SPACE", (event: KeyboardEvent) => {
+      event.preventDefault();
+      if (this.isGameOver) return;
+      if (this.isPressingJump) {
+        this.fireJump();
       }
     });
 
@@ -87,10 +183,18 @@ export default class GarfieldGame extends Phaser.Scene {
           return;
         }
       }
-
+      if (this.isGameOver || this.isPressingJump) return;
       const body = this.player.body as Phaser.Physics.Arcade.Body;
-      if (!this.isGameOver && body.touching.down) {
-        this.player.setVelocityY(-750);
+      if (body.touching.down) {
+        this.isPressingJump = true;
+        this.jumpPressStart = Date.now();
+      }
+    });
+
+    this.input.on("pointerup", () => {
+      if (this.isGameOver) return;
+      if (this.isPressingJump) {
+        this.fireJump();
       }
     });
 
@@ -123,6 +227,19 @@ export default class GarfieldGame extends Phaser.Scene {
       undefined,
       this
     );
+  }
+
+  private fireJump() {
+    this.isPressingJump = false;
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    if (!body.touching.down) return;
+
+    const heldMs = Date.now() - this.jumpPressStart;
+    const clampedMs = Math.min(heldMs, this.MAX_HOLD_MS);
+    const t = (clampedMs - this.MIN_HOLD_MS) / (this.MAX_HOLD_MS - this.MIN_HOLD_MS);
+    const velocity = this.MIN_JUMP_VELOCITY + t * (this.MAX_JUMP_VELOCITY - this.MIN_JUMP_VELOCITY);
+
+    this.player.setVelocityY(velocity);
   }
 
   spawnObstacle() {
@@ -166,6 +283,7 @@ export default class GarfieldGame extends Phaser.Scene {
     (dollar as Phaser.Physics.Arcade.Sprite).destroy();
     this.score += 1;
     this.scoreText.setText(`Score: ${this.score}`);
+    this.playCoinSound();
 
     if (this.score % 10 === 0) {
       this.gameSpeed += 20;
@@ -175,7 +293,9 @@ export default class GarfieldGame extends Phaser.Scene {
   hitObstacle() {
     if (this.isGameOver) return;
 
+    this.isPressingJump = false;
     this.isGameOver = true;
+    this.playHitSound();
     this.physics.pause();
     this.obstacleTimer.destroy();
     this.dollarTimer.destroy();
@@ -242,7 +362,6 @@ export default class GarfieldGame extends Phaser.Scene {
     });
 
     const gameDuration = Math.floor((Date.now() - this.gameStartTime) / 1000);
-
     if (this.onGameOver) {
       this.onGameOver(this.score, gameDuration);
     }
@@ -255,16 +374,12 @@ export default class GarfieldGame extends Phaser.Scene {
   update() {
     this.obstacles.children.entries.forEach((obstacle) => {
       const obs = obstacle as Phaser.Physics.Arcade.Sprite;
-      if (obs.x < -50) {
-        obs.destroy();
-      }
+      if (obs.x < -50) obs.destroy();
     });
 
     this.dollars.children.entries.forEach((dollar) => {
       const dol = dollar as Phaser.Physics.Arcade.Sprite;
-      if (dol.x < -50) {
-        dol.destroy();
-      }
+      if (dol.x < -50) dol.destroy();
     });
   }
 }
