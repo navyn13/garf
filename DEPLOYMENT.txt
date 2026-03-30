@@ -1,0 +1,120 @@
+GARFIELD COIN - DEPLOYMENT GUIDE
+=================================
+
+QUICK START (Local Development)
+--------------------------------
+1. Copy .env.local.example to .env.local
+2. Update MONGODB_URI in .env.local
+3. Run: npm run dev
+4. Open: http://localhost:3000
+
+MONGODB SETUP
+-------------
+Option 1 - MongoDB Atlas (Recommended for Production):
+1. Go to https://www.mongodb.com/cloud/atlas
+2. Create free account
+3. Create new cluster (M0 Free tier)
+4. Create database user (Database Access)
+5. Whitelist IP (Network Access) - use 0.0.0.0/0 for all IPs
+6. Get connection string from "Connect" button
+7. Update .env.local:
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/garfield_game?retryWrites=true&w=majority
+
+Option 2 - Local MongoDB:
+1. Install MongoDB: brew install mongodb-community
+2. Start MongoDB: brew services start mongodb-community
+3. Update .env.local:
+   MONGODB_URI=mongodb://localhost:27017/garfield_game
+
+VERCEL DEPLOYMENT (Frontend)
+-----------------------------
+1. Push code to GitHub:
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git branch -M main
+   git remote add origin <your-repo-url>
+   git push -u origin main
+
+2. Deploy to Vercel:
+   - Go to https://vercel.com
+   - Import your GitHub repository
+   - Add environment variable:
+     MONGODB_URI=<your-mongodb-connection-string>
+   - Deploy
+
+3. Your site will be live at: https://your-project.vercel.app
+
+RAILWAY DEPLOYMENT (Alternative Backend if needed)
+---------------------------------------------------
+If you need separate backend hosting:
+1. Create Railway account: https://railway.app
+2. Create new project
+3. Add MongoDB plugin (or use external MongoDB Atlas)
+4. Deploy backend separately
+5. Update frontend API calls to point to Railway URL
+
+ENVIRONMENT VARIABLES
+---------------------
+Production (.env.local or Vercel):
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/garfield_game
+
+DOMAIN SETUP
+------------
+1. In Vercel dashboard, go to Settings > Domains
+2. Add your custom domain (e.g., garfieldcoin.store)
+3. Update DNS records as instructed by Vercel
+4. SSL certificate auto-generated
+
+DATABASE INDEXES (Recommended for Performance)
+-----------------------------------------------
+Run these commands in MongoDB shell or Atlas:
+
+db.scores.createIndex({ date: 1, score: -1 })
+db.scores.createIndex({ wallet_address: 1, date: 1 })
+db.scores.createIndex({ timestamp: 1 })
+db.rewards.createIndex({ wallet_address: 1, date: 1 })
+
+MONITORING
+----------
+- Vercel Analytics: Enable in Vercel dashboard
+- MongoDB Atlas: Monitor queries and performance
+- Check logs: vercel logs <project-name>
+
+DAILY LEADERBOARD RESET
+------------------------
+The leaderboard automatically resets daily at midnight UTC.
+No cron job needed - it's handled by date filtering in queries.
+
+SCALING CONSIDERATIONS
+----------------------
+- MongoDB Atlas M0 (free): ~500 concurrent connections
+- Vercel Hobby: Unlimited bandwidth, 100GB/month
+- For high traffic: Upgrade to MongoDB M10+ and Vercel Pro
+
+SECURITY CHECKLIST
+------------------
+✓ Never commit .env.local to git
+✓ Use environment variables for MongoDB URI
+✓ Anti-cheat validation enabled
+✓ Rate limiting on score submission
+✓ Input validation on all API routes
+
+TESTING BEFORE LAUNCH
+----------------------
+1. Test wallet connection (Phantom)
+2. Play game and submit score
+3. Verify leaderboard updates
+4. Test top 50 reward claim
+5. Check mobile responsiveness
+6. Test with multiple wallets
+
+LAUNCH CHECKLIST
+----------------
+□ MongoDB database created and indexed
+□ Environment variables configured
+□ Domain connected (if custom)
+□ Social links updated
+□ Countdown timer set to launch date
+□ Test all features end-to-end
+□ Monitor error logs post-launch

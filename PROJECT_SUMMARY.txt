@@ -1,0 +1,310 @@
+GARFIELD COIN - VIRAL GAME WEBSITE
+===================================
+
+PROJECT OVERVIEW
+----------------
+A complete meme coin website featuring an endless runner game where players collect dollars,
+compete on daily leaderboards, and top 50 players win merchandise. Built with modern web3
+integration using Solana wallet connectivity.
+
+COMPLETED FEATURES
+------------------
+✓ Landing Page
+  - Hero section with $GARFIELD branding
+  - Live countdown timer to launch
+  - "Play Game" button with prominent CTA
+  - Live stats (players today, top score)
+  - "Daily Top 50 win merch" messaging
+  - WTF is GARFIELD section
+  - Tokenomics display
+  - 4-phase roadmap
+  - Social media links (X, Discord, Telegram)
+  - Responsive design
+
+✓ Game Page
+  - Phaser 3 endless runner game
+  - Garfield auto-runs, player jumps to avoid obstacles
+  - Collect green dollars for points
+  - Red obstacles cause game over
+  - Progressive difficulty (speed increases every 10 points)
+  - Score display (top left)
+  - Wallet connection required to play
+  - Touch and keyboard controls (SPACE or TAP)
+
+✓ Wallet Integration
+  - Solana Phantom wallet support
+  - Connect wallet button (top right)
+  - Wallet address as user ID
+  - No login system needed
+  - Auto-connect on return visits
+
+✓ Leaderboard System
+  - Real-time updates (every 15 seconds)
+  - Daily reset at midnight UTC
+  - Shows top 100 players
+  - Highlights top 50 (eligible for merch)
+  - User rank highlighting
+  - Wallet address display (truncated)
+
+✓ Reward System
+  - Automatic "Claim Reward" modal for top 50
+  - Collects: name, shipping address, phone
+  - One claim per wallet per day
+  - Stored in MongoDB for fulfillment
+  - Success confirmation
+
+✓ Anti-Cheat System
+  - Max 3 points per second validation
+  - Minimum 5 second game duration
+  - Absolute max score: 10,000 points
+  - Duplicate submission detection (5 sec window)
+  - Timestamp validation (60 sec window)
+  - Server-side score validation
+  - Rejects impossible scores
+
+ARCHITECTURE
+------------
+Frontend:
+- Next.js 16 with App Router
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Client-side game rendering
+- Dynamic imports for SSR compatibility
+
+Game Engine:
+- Phaser 3 (canvas-based)
+- Physics-based collision detection
+- Procedural obstacle/dollar generation
+- Progressive difficulty scaling
+
+Backend:
+- Next.js API routes
+- MongoDB for data persistence
+- RESTful API design
+- Serverless-ready
+
+Database Schema:
+- scores: { wallet_address, score, duration, timestamp, date, created_at }
+- rewards: { wallet_address, name, address, phone, rank, date, claimed_at }
+
+FILE STRUCTURE
+--------------
+app/
+  ├── page.tsx                    # Landing page
+  ├── layout.tsx                  # Root layout
+  ├── globals.css                 # Global styles
+  ├── game/
+  │   ├── page.tsx                # Game page
+  │   └── layout.tsx              # Game layout with wallet provider
+  └── api/
+      ├── submit-score/route.ts   # Score submission endpoint
+      ├── leaderboard/route.ts    # Leaderboard data endpoint
+      ├── stats/route.ts          # Live stats endpoint
+      └── claim-reward/route.ts   # Reward claim endpoint
+
+components/
+  ├── Countdown.tsx               # Launch countdown timer
+  ├── LiveStats.tsx               # Real-time player stats
+  ├── GameCanvas.tsx              # Phaser game wrapper
+  ├── Leaderboard.tsx             # Leaderboard display
+  ├── WalletButton.tsx            # Solana wallet connect button
+  ├── WalletProvider.tsx          # Wallet context provider
+  └── RewardClaimModal.tsx        # Top 50 reward claim form
+
+game/
+  └── GarfieldGame.ts             # Phaser game logic
+
+lib/
+  ├── mongodb.ts                  # MongoDB connection
+  └── antiCheat.ts                # Score validation logic
+
+API ENDPOINTS
+-------------
+POST /api/submit-score
+  Request: { wallet_address, score, duration, timestamp }
+  Response: { success, score, rank, isTopFifty }
+  Validation: Anti-cheat checks, duplicate detection
+
+GET /api/leaderboard
+  Response: { leaderboard: [{ wallet_address, score, date, rank }] }
+  Logic: Daily top 100, sorted by score
+
+GET /api/stats
+  Response: { playersToday, topScore }
+  Updates: Real-time aggregation
+
+POST /api/claim-reward
+  Request: { wallet_address, name, address, phone, rank }
+  Response: { success }
+  Validation: Top 50 only, one claim per day
+
+GAME MECHANICS
+--------------
+Controls:
+- SPACE key or TAP screen to jump
+- Automatic running (endless runner)
+
+Scoring:
+- Green circles (dollars) = +1 point
+- Speed increases every 10 points
+- Red obstacles = game over
+
+Physics:
+- Gravity: 1000
+- Jump velocity: -500
+- Scroll speed: 300 (base) + progressive increase
+
+Spawn Rates:
+- Obstacles: Every 2 seconds
+- Dollars: Every 1.5 seconds
+- Random Y positioning for dollars
+
+ANTI-CHEAT DETAILS
+------------------
+Validation Rules:
+1. Score >= 0 (no negative scores)
+2. Score <= 10,000 (absolute maximum)
+3. Duration >= 5 seconds (minimum game time)
+4. Score/Duration <= 3 points/second (rate limit)
+5. Timestamp within 60 seconds of submission
+6. No duplicate submissions within 5 seconds
+
+Server-Side:
+- All validation happens on backend
+- Client cannot bypass checks
+- Invalid scores rejected with reason
+
+DAILY RESET LOGIC
+-----------------
+Implementation:
+- No cron job needed
+- Date stored as midnight UTC timestamp
+- Queries filter by date field
+- Automatic reset when day changes
+
+Example:
+- Today: 2026-03-30 00:00:00
+- Query: { date: new Date("2026-03-30T00:00:00Z") }
+- Tomorrow: New date, new leaderboard
+
+CUSTOMIZATION GUIDE
+-------------------
+Game Difficulty:
+- Edit game/GarfieldGame.ts
+- Change gameSpeed (line 13): default 300
+- Change spawn delays (lines 82-94)
+- Adjust jump velocity (line 72): default -500
+
+Anti-Cheat Limits:
+- Edit lib/antiCheat.ts
+- MAX_SCORE_PER_SECOND: default 3
+- MIN_GAME_DURATION: default 5
+- MAX_SCORE_ABSOLUTE: default 10000
+
+Countdown Target:
+- Edit components/Countdown.tsx
+- Change targetDate (line 15)
+
+Colors:
+- Edit tailwind.config.ts
+- Modify garfield color palette
+
+PERFORMANCE OPTIMIZATION
+------------------------
+Already Implemented:
+- Dynamic imports for game (no SSR)
+- Static page generation where possible
+- Efficient MongoDB queries with aggregation
+- Client-side caching (15s intervals)
+
+Future Optimizations:
+- Add Redis for leaderboard caching
+- CDN for static assets
+- Database connection pooling
+- Rate limiting middleware
+
+TROUBLESHOOTING
+---------------
+Issue: "window is not defined"
+Fix: Game uses dynamic import with ssr: false
+
+Issue: MongoDB connection error
+Fix: Check MONGODB_URI format and network access
+
+Issue: Wallet not connecting
+Fix: Ensure running on https:// or localhost
+
+Issue: Scores not submitting
+Fix: Check browser console for validation errors
+
+VIRAL MECHANICS
+---------------
+1. Daily Competition
+   - Fresh leaderboard every 24 hours
+   - Everyone has a chance to win
+
+2. Tangible Rewards
+   - Top 50 win physical merch
+   - Creates real incentive to play
+
+3. Social Proof
+   - Live player count
+   - Real-time leaderboard
+   - Community competition
+
+4. Low Barrier to Entry
+   - One-click wallet connection
+   - Simple game mechanics
+   - Instant play
+
+5. Shareability
+   - Players share scores on social media
+   - Top 50 status is prestigious
+   - Community-driven growth
+
+NEXT STEPS
+----------
+1. Add actual Garfield graphics (replace colored rectangles)
+2. Add sound effects and background music
+3. Implement social sharing (Twitter/X integration)
+4. Add game difficulty modes
+5. Create merch designs
+6. Set up automated reward fulfillment
+7. Add analytics tracking
+8. Implement referral system
+9. Create admin dashboard for reward management
+10. Add more game variations
+
+MAINTENANCE
+-----------
+Daily Tasks:
+- Monitor leaderboard for cheaters
+- Process top 50 reward claims
+- Check error logs
+
+Weekly Tasks:
+- Analyze player engagement
+- Update social media
+- Community management
+
+Monthly Tasks:
+- Database cleanup (old scores)
+- Performance review
+- Feature updates based on feedback
+
+COST ESTIMATE
+-------------
+Development: $0 (open source stack)
+Hosting: $0 (Vercel free tier + MongoDB Atlas free tier)
+Domain: ~$10-15/year
+Scaling: ~$25-50/month (if traffic grows)
+
+SUPPORT & COMMUNITY
+-------------------
+For issues or questions:
+- Check README.txt for setup instructions
+- Review DEPLOYMENT.txt for hosting
+- Monitor MongoDB Atlas dashboard
+- Check Vercel logs for errors
+
+Built with love for the Garfield community! 🐱

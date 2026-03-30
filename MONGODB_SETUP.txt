@@ -1,0 +1,239 @@
+MONGODB SETUP GUIDE
+===================
+
+OPTION 1: MongoDB Atlas (Recommended - Cloud, Free Tier)
+---------------------------------------------------------
+
+Step 1: Create Account
+1. Go to https://www.mongodb.com/cloud/atlas
+2. Click "Try Free"
+3. Sign up with email or Google
+
+Step 2: Create Cluster
+1. Choose "M0 Free" tier
+2. Select cloud provider (AWS recommended)
+3. Choose region closest to your users
+4. Name your cluster (e.g., "garfield-cluster")
+5. Click "Create Cluster" (takes 3-5 minutes)
+
+Step 3: Create Database User
+1. Click "Database Access" in left sidebar
+2. Click "Add New Database User"
+3. Choose "Password" authentication
+4. Username: garfield_admin (or your choice)
+5. Password: Generate secure password
+6. Database User Privileges: "Read and write to any database"
+7. Click "Add User"
+
+Step 4: Whitelist IP Address
+1. Click "Network Access" in left sidebar
+2. Click "Add IP Address"
+3. For development: Click "Allow Access from Anywhere" (0.0.0.0/0)
+4. For production: Add your server's IP
+5. Click "Confirm"
+
+Step 5: Get Connection String
+1. Click "Database" in left sidebar
+2. Click "Connect" on your cluster
+3. Choose "Connect your application"
+4. Copy the connection string
+5. Replace <password> with your database user password
+6. Replace <dbname> with "garfield_game"
+
+Example:
+mongodb+srv://garfield_admin:YOUR_PASSWORD@garfield-cluster.xxxxx.mongodb.net/garfield_game?retryWrites=true&w=majority
+
+Step 6: Configure Environment
+1. Create .env.local in project root
+2. Add: MONGODB_URI=<your-connection-string>
+3. Save file
+
+Step 7: Create Indexes (Optional but Recommended)
+1. Click "Browse Collections"
+2. Create database: "garfield_game"
+3. Create collections: "scores", "rewards"
+4. In MongoDB shell or Compass, run:
+
+db.scores.createIndex({ date: 1, score: -1 })
+db.scores.createIndex({ wallet_address: 1, date: 1 })
+db.scores.createIndex({ timestamp: 1 })
+db.rewards.createIndex({ wallet_address: 1, date: 1 })
+
+OPTION 2: Local MongoDB (Development Only)
+-------------------------------------------
+
+Step 1: Install MongoDB
+macOS:
+  brew tap mongodb/brew
+  brew install mongodb-community
+
+Linux (Ubuntu):
+  wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+  echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+  sudo apt-get update
+  sudo apt-get install -y mongodb-org
+
+Windows:
+  Download installer from: https://www.mongodb.com/try/download/community
+
+Step 2: Start MongoDB
+macOS:
+  brew services start mongodb-community
+
+Linux:
+  sudo systemctl start mongod
+  sudo systemctl enable mongod
+
+Windows:
+  Start MongoDB service from Services app
+
+Step 3: Verify Running
+mongo --version
+mongosh
+
+Step 4: Configure Environment
+Create .env.local:
+MONGODB_URI=mongodb://localhost:27017/garfield_game
+
+Step 5: Create Database (Optional)
+mongosh
+use garfield_game
+db.scores.insertOne({ test: true })
+db.rewards.insertOne({ test: true })
+db.scores.deleteOne({ test: true })
+db.rewards.deleteOne({ test: true })
+
+VERIFY CONNECTION
+-----------------
+After setup, test connection:
+
+1. Start dev server: npm run dev
+2. Open browser: http://localhost:3000
+3. Check terminal for MongoDB connection errors
+4. If no errors, connection successful!
+
+TROUBLESHOOTING
+---------------
+
+Error: "MongoServerError: bad auth"
+Fix: Check username/password in connection string
+
+Error: "MongooseServerSelectionError: connect ECONNREFUSED"
+Fix: MongoDB not running. Start MongoDB service.
+
+Error: "Current IP address is not allowed"
+Fix: Add your IP to Network Access in Atlas
+
+Error: "Authentication failed"
+Fix: Check Database User credentials
+
+COLLECTIONS SCHEMA
+------------------
+
+scores:
+{
+  wallet_address: String,
+  score: Number,
+  duration: Number,
+  timestamp: Number,
+  date: Date (midnight UTC),
+  created_at: Date
+}
+
+rewards:
+{
+  wallet_address: String,
+  name: String,
+  address: String,
+  phone: String,
+  rank: Number,
+  date: Date (midnight UTC),
+  claimed_at: Date
+}
+
+MONGODB COMPASS (GUI Tool)
+---------------------------
+Download: https://www.mongodb.com/products/compass
+
+Benefits:
+- Visual database browser
+- Query builder
+- Index management
+- Performance monitoring
+
+Connect:
+1. Open Compass
+2. Paste connection string
+3. Click "Connect"
+4. Browse collections visually
+
+PRODUCTION TIPS
+---------------
+1. Use MongoDB Atlas for production
+2. Enable authentication
+3. Whitelist only your server IPs
+4. Enable backup (Atlas M10+ tier)
+5. Monitor slow queries
+6. Set up alerts for errors
+7. Regular database maintenance
+
+SCALING
+-------
+Free Tier Limits (Atlas M0):
+- 512 MB storage
+- Shared RAM
+- Shared vCPU
+- Good for: 100-1000 daily active users
+
+When to Upgrade:
+- Storage > 400 MB
+- Response time > 100ms
+- Connection pool exhausted
+- Need dedicated resources
+
+Recommended Upgrade: M10 ($57/month)
+- 10 GB storage
+- 2 GB RAM
+- Dedicated cluster
+- Automated backups
+
+BACKUP STRATEGY
+---------------
+Atlas (M10+):
+- Automatic continuous backups
+- Point-in-time recovery
+- Snapshot retention
+
+Manual Backup:
+mongodump --uri="mongodb+srv://..." --out=./backup
+mongorestore --uri="mongodb+srv://..." ./backup
+
+MONITORING
+----------
+Atlas Dashboard:
+- Real-time metrics
+- Slow query analyzer
+- Connection stats
+- Storage usage
+
+Set Alerts For:
+- High CPU usage (>80%)
+- High memory (>80%)
+- Slow queries (>100ms)
+- Connection spikes
+
+SECURITY CHECKLIST
+------------------
+✓ Strong database password
+✓ IP whitelist configured
+✓ Database user with minimal permissions
+✓ Connection string in .env.local (not committed)
+✓ Enable encryption at rest (Atlas M10+)
+✓ Regular security updates
+
+READY TO GO!
+------------
+Your MongoDB is now configured for the Garfield Coin game.
+Start the dev server and start playing!
+
+npm run dev
