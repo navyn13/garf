@@ -1,10 +1,12 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useEffect, useState, useRef } from "react";
 
 export default function WalletButton() {
-  const { publicKey, disconnect, connect, wallet } = useWallet();
+  const { publicKey, disconnect } = useWallet();
+  const { setVisible } = useWalletModal();
   const [mounted, setMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -30,12 +32,8 @@ export default function WalletButton() {
     );
   }
 
-  const handleConnect = async () => {
-    try {
-      await connect();
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-    }
+  const handleConnect = () => {
+    setVisible(true);
   };
 
   const handleDisconnect = async () => {
