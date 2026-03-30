@@ -13,6 +13,7 @@ export default function GameCanvas({ onGameOver, walletConnected }: GameCanvasPr
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const initializingRef = useRef(false);
   const onGameOverRef = useRef(onGameOver);
 
@@ -35,6 +36,7 @@ export default function GameCanvas({ onGameOver, walletConnected }: GameCanvasPr
     if (initializingRef.current) return;
 
     initializingRef.current = true;
+    setIsLoading(true);
 
     const gameWidth = window.innerWidth;
     const gameHeight = window.innerHeight - 200;
@@ -77,6 +79,15 @@ export default function GameCanvas({ onGameOver, walletConnected }: GameCanvasPr
               },
               onPlayAgain: handlePlayAgain
             });
+            
+            scene.load.on('complete', () => {
+              setIsLoading(false);
+            });
+            
+            if (scene.textures.exists('garfield') && scene.textures.exists('coin')) {
+              setIsLoading(false);
+            }
+            
             setGameStarted(true);
             initializingRef.current = false;
             clearInterval(checkScene);
@@ -89,10 +100,12 @@ export default function GameCanvas({ onGameOver, walletConnected }: GameCanvasPr
         if (!gameStarted) {
           initializingRef.current = false;
         }
+        setIsLoading(false);
       }, 5000);
     } catch (error) {
       console.error("Failed to initialize game:", error);
       initializingRef.current = false;
+      setIsLoading(false);
     }
 
     return () => {
@@ -104,6 +117,7 @@ export default function GameCanvas({ onGameOver, walletConnected }: GameCanvasPr
         }
         gameRef.current = null;
         setGameStarted(false);
+        setIsLoading(true);
         initializingRef.current = false;
       }
     };
@@ -119,10 +133,16 @@ export default function GameCanvas({ onGameOver, walletConnected }: GameCanvasPr
 
   return (
     <div className="relative w-full">
+      {isLoading && walletConnected && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-900 bg-opacity-90 rounded-lg">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-yellow-400 mb-4"></div>
+            <p className="text-2xl text-yellow-400 font-bold">Loading Game Assets...</p>
+            <p className="text-lg text-gray-300 mt-2">Preparing your adventure!</p>
+          </div>
+        </div>
+      )}
       <div ref={containerRef} className="rounded-lg overflow-hidden shadow-2xl w-full" />
-      <div className="mt-4 text-center text-gray-400">
-        <p className="text-lg">Press SPACE or TAP to jump!</p>
-      </div>
     </div>
   );
 }
