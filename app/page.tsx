@@ -61,9 +61,16 @@ export default function Home() {
           <a
             href="#community"
             aria-label="Join Garfield community"
-            className="rounded-full bg-garfield-orange px-4 py-2 text-sm font-semibold text-black transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-garfield-orange/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-garfield-orange focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+            className="hidden rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:border-white/40 hover:bg-white/5 md:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
           >
             Join Now
+          </a>
+          <a
+            href="/game"
+            aria-label="Play Garfield game"
+            className="rounded-full bg-garfield-orange px-4 py-2 text-sm font-semibold text-black transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-garfield-orange/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-garfield-orange focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+          >
+            Play Game
           </a>
         </nav>
       </header>
@@ -84,9 +91,16 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <a
+                  href="/game"
+                  aria-label="Play Garfield game now"
+                  className="rounded-full bg-garfield-orange px-6 py-3 text-sm font-semibold text-black transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-garfield-orange/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-garfield-orange focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+                >
+                  Play Game
+                </a>
+                <a
                   href="#tokenomics"
                   aria-label="View tokenomics details"
-                  className="rounded-full bg-garfield-orange px-6 py-3 text-sm font-semibold text-black transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-garfield-orange/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-garfield-orange focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+                  className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:border-white/40 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
                 >
                   View Tokenomics
                 </a>
