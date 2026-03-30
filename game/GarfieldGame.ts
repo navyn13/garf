@@ -396,6 +396,7 @@ export default class GarfieldGame extends Phaser.Scene {
       0x000000,
       0.7
     );
+    
 
     this.add
       .text(this.scale.width / 2, this.scale.height / 2 - 80, "GAME OVER", {
