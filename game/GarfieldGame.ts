@@ -19,7 +19,7 @@ export default class GarfieldGame extends Phaser.Scene {
     super({ key: "GarfieldGame" });
   }
 
-  init(data: { 
+  init(data: {
     onGameOver?: (score: number, duration: number) => void;
     onPlayAgain?: () => void;
   }) {
@@ -42,23 +42,21 @@ export default class GarfieldGame extends Phaser.Scene {
 
     const ground = this.add.rectangle(
       this.scale.width / 2,
-      this.scale.height - 40,
+      this.scale.height - 20,
       this.scale.width,
-      80,
+      40,
       0x228B22
     );
     this.physics.add.existing(ground, true);
 
-    this.player = this.physics.add.sprite(200, this.scale.height - 220, "garfield");
+    this.player = this.physics.add.sprite(200, this.scale.height - 150, "garfield");
     this.player.setScale(0.35);
     this.player.setBounce(0);
     this.player.setCollideWorldBounds(true);
-    // Arcade Physics uses the sprite frame bounds (including transparent pixels),
-    // so trimmed/transparent images can collide "early". We manually tighten the body.
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
-    const bodyW = this.player.displayWidth * 0.55;
-    const bodyH = this.player.displayHeight * 0.7;
-    playerBody.setSize(bodyW, bodyH, true); // center body on sprite
+    const bodyW = this.player.displayWidth * 0.85;
+    const bodyH = this.player.displayHeight * 0.9;
+    playerBody.setSize(bodyW, bodyH, true);
     (this.player.body as Phaser.Physics.Arcade.Body).setGravityY(1800);
     this.player.refreshBody();
 
@@ -73,7 +71,8 @@ export default class GarfieldGame extends Phaser.Scene {
       fontStyle: "bold",
     });
 
-    this.input.keyboard?.on("keydown-SPACE", () => {
+    this.input.keyboard?.on("keydown-SPACE", (event: KeyboardEvent) => {
+      event.preventDefault();
       const body = this.player.body as Phaser.Physics.Arcade.Body;
       if (!this.isGameOver && body.touching.down) {
         this.player.setVelocityY(-750);
@@ -88,7 +87,7 @@ export default class GarfieldGame extends Phaser.Scene {
           return;
         }
       }
-      
+
       const body = this.player.body as Phaser.Physics.Arcade.Body;
       if (!this.isGameOver && body.touching.down) {
         this.player.setVelocityY(-750);
@@ -130,14 +129,14 @@ export default class GarfieldGame extends Phaser.Scene {
     if (this.isGameOver) return;
 
     const obstacleGraphics = this.add.graphics();
-    obstacleGraphics.fillStyle(0xFF0000, 1);
+    obstacleGraphics.fillStyle(0xff0000, 1);
     obstacleGraphics.fillRect(0, 0, 50, 80);
     obstacleGraphics.generateTexture("obstacle", 50, 80);
     obstacleGraphics.destroy();
 
     const obstacle = this.obstacles.create(
       this.scale.width,
-      this.scale.height - 120,
+      this.scale.height - 80,
       "obstacle"
     );
     obstacle.setVelocityX(-this.gameSpeed);
@@ -148,29 +147,23 @@ export default class GarfieldGame extends Phaser.Scene {
     if (this.isGameOver) return;
 
     const yPos = Phaser.Math.Between(
-      this.scale.height - 300,
-      this.scale.height - 180
+      this.scale.height - 250,
+      this.scale.height - 120
     );
     const dollar = this.dollars.create(this.scale.width, yPos, "coin");
     dollar.setScale(0.08);
-    
+
     const dollarBody = dollar.body as Phaser.Physics.Arcade.Body;
-    const coinSize = dollar.displayWidth * 0.6;
-    dollarBody.setCircle(coinSize / 2);
-    dollarBody.setOffset(
-      (dollar.displayWidth - coinSize) / 2,
-      (dollar.displayHeight - coinSize) / 2
-    );
-    
-    dollar.setVelocityX(-this.gameSpeed);
     dollarBody.allowGravity = false;
+    dollarBody.immovable = true;
+    dollar.setVelocityX(-this.gameSpeed);
   }
 
   collectDollar(
     player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     dollar: Phaser.Types.Physics.Arcade.GameObjectWithBody
   ) {
-    dollar.destroy();
+    (dollar as Phaser.Physics.Arcade.Sprite).destroy();
     this.score += 1;
     this.scoreText.setText(`Score: ${this.score}`);
 
@@ -187,7 +180,7 @@ export default class GarfieldGame extends Phaser.Scene {
     this.obstacleTimer.destroy();
     this.dollarTimer.destroy();
 
-    const overlay = this.add.rectangle(
+    this.add.rectangle(
       this.scale.width / 2,
       this.scale.height / 2,
       this.scale.width,
@@ -205,11 +198,16 @@ export default class GarfieldGame extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(this.scale.width / 2, this.scale.height / 2 - 10, `Final Score: ${this.score}`, {
-        fontSize: "36px",
-        color: "#FFD23F",
-        fontStyle: "bold",
-      })
+      .text(
+        this.scale.width / 2,
+        this.scale.height / 2 - 10,
+        `Final Score: ${this.score}`,
+        {
+          fontSize: "36px",
+          color: "#FFD23F",
+          fontStyle: "bold",
+        }
+      )
       .setOrigin(0.5);
 
     const buttonBg = this.add.rectangle(
@@ -217,20 +215,17 @@ export default class GarfieldGame extends Phaser.Scene {
       this.scale.height / 2 + 80,
       200,
       60,
-      0xFFD23F
+      0xffd23f
     );
     buttonBg.setInteractive({ useHandCursor: true });
 
-    const buttonText = this.add.text(
-      this.scale.width / 2,
-      this.scale.height / 2 + 80,
-      "PLAY AGAIN",
-      {
+    const buttonText = this.add
+      .text(this.scale.width / 2, this.scale.height / 2 + 80, "PLAY AGAIN", {
         fontSize: "24px",
         color: "#000000",
         fontStyle: "bold",
-      }
-    ).setOrigin(0.5);
+      })
+      .setOrigin(0.5);
 
     this.playAgainButton = this.add.container(0, 0, [buttonBg, buttonText]);
 
@@ -239,11 +234,11 @@ export default class GarfieldGame extends Phaser.Scene {
     });
 
     buttonBg.on("pointerover", () => {
-      buttonBg.setFillStyle(0xFF6B35);
+      buttonBg.setFillStyle(0xff6b35);
     });
 
     buttonBg.on("pointerout", () => {
-      buttonBg.setFillStyle(0xFFD23F);
+      buttonBg.setFillStyle(0xffd23f);
     });
 
     const gameDuration = Math.floor((Date.now() - this.gameStartTime) / 1000);
